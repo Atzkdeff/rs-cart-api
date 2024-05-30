@@ -1,11 +1,11 @@
-import { Cart, CartItem } from '../models';
+import { ICart, ICartItem } from '../models';
 
 /**
- * @param {Cart} cart
+ * @param {ICart} cart
  * @returns {number}
  */
-export function calculateCartTotal(cart: Cart): number {
-  return cart ? cart.items.reduce((acc: number, { product: { price }, count }: CartItem) => {
+export function calculateCartTotal(cart: ICart): number {
+  return cart ? cart.items.reduce((acc: number, { product: { price }, count }: ICartItem) => {
     return acc += price * count;
   }, 0) : 0;
 }

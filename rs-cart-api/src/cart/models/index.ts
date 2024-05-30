@@ -1,4 +1,4 @@
-export type Product = {
+export type IProduct = {
   id: string,
   title: string,
   description: string,
@@ -6,12 +6,12 @@ export type Product = {
 };
 
 
-export type CartItem = {
-  product: Product,
+export type ICartItem = {
+  product: IProduct,
   count: number,
 }
 
-export type Cart = {
+export type ICart = {
   id: string,
-  items: CartItem[],
+  items: ICartItem[],
 }
