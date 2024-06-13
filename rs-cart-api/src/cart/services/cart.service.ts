@@ -1,35 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-
+import { Sequelize } from 'sequelize-typescript';
 import { v4 } from 'uuid';
 
-import { ICart } from '../models';
 import { Cart } from '../models/cart.model';
+import { CartItem } from '../models/cart-item.model';
 
 @Injectable()
 export class CartService {
-  private userCarts: Record<string, ICart> = {};
+  constructor(
+    @InjectModel(Cart) private cartModel: typeof Cart,
+    @InjectModel(CartItem) private cartItemModel: typeof CartItem,
+    private sequelize: Sequelize
+  ) {}
 
-  constructor(@InjectModel(Cart) private cartModel: typeof Cart) {}
-
-  findByUserId(userId: string): ICart {
-    return this.userCarts[ userId ];
+  findByUserId(userId: string): Promise<Cart> {
+    return this.cartModel.findOne({
+      where: { user_id: userId },
+      include: [CartItem]  // also fetch the associated CartItems
+    });
   }
 
-  createByUserId(userId: string) {
-    const id = v4(v4());
-    const userCart = {
-      id,
-      items: [],
-    };
-
-    this.userCarts[ userId ] = userCart;
-
-    return userCart;
+  createByUserId(userId: string): Promise<Cart> {
+    return this.cartModel.create({ user_id: v4() });
   }
 
-  findOrCreateByUserId(userId: string): ICart {
-    const userCart = this.findByUserId(userId);
+  async findOrCreateByUserId(userId: string): Promise<Cart> {
+    console.log("userId", userId)
+    let userCart = await this.findByUserId(userId ?? "");
 
     if (userCart) {
       return userCart;
@@ -38,49 +36,26 @@ export class CartService {
     return this.createByUserId(userId);
   }
 
-  updateByUserId(userId: string, { items }: ICart): ICart {
-    const { id, ...rest } = this.findOrCreateByUserId(userId);
+  updateByUserId(userId: string, { cartItems }: Cart): Promise<Cart> {
+    return this.sequelize.transaction(async (t) => {
+      const userCart = await this.findOrCreateByUserId(userId);
 
-    const updatedCart = {
-      id,
-      ...rest,
-      items: [ ...items ],
-    }
+      const items = cartItems.map((item) => ({
+        ...item,
+        cart_id: userCart.id,
+      }));
 
-    this.userCarts[ userId ] = { ...updatedCart };
+      await this.cartItemModel.bulkCreate(items, {
+        updateOnDuplicate: ["count"],
+        transaction: t
+      });
 
-    return { ...updatedCart };
+      return this.findByUserId(userId);
+    });
   }
 
-  removeByUserId(userId): void {
-    this.userCarts[ userId ] = null;
+  async removeByUserId(userId): Promise<void> {
+    const cart = await this.findByUserId(userId);
+    cart.destroy();
   }
-
 }
-
-// https://docs.nestjs.com/techniques/database#sequelize-integration
-
-//@Injectable()
-// export class UsersService {
-//   constructor(
-//     @InjectModel(User)
-//     private userModel: typeof User,
-//   ) {}
-//
-//   async findAll(): Promise<User[]> {
-//     return this.userModel.findAll();
-//   }
-//
-//   findOne(id: string): Promise<User> {
-//     return this.userModel.findOne({
-//       where: {
-//         id,
-//       },
-//     });
-//   }
-//
-//   async remove(id: string): Promise<void> {
-//     const user = await this.findOne(id);
-//     await user.destroy();
-//   }
-// }

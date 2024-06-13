@@ -1,15 +1,20 @@
 import { APIGatewayEvent, Context } from "aws-lambda";
+import * as serverless from 'serverless-http';
 
 import { bootstrap } from "../rs-cart-api/dist/main.js";
+
+let cachedServer: serverless.Handler;
 
 export async function bootstrapServerlessApp(  event: APIGatewayEvent, context: Context,) {
   try {
     console.log('start bootstrapping');
-    const serverlessHandler = await bootstrap();
-    console.log(`App is prepared`);
-    const result = await serverlessHandler(event, context);
 
-    return result;
+    if (!cachedServer) {
+      cachedServer = await  bootstrap();
+    }
+
+    console.log(`App is prepared`);
+    return await cachedServer(event, context);
   } catch (error) {
     console.log(
       'app bootstrap failed',

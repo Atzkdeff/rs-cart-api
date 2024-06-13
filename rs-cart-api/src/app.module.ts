@@ -17,13 +17,19 @@ import { CartItem } from './cart/models/cart-item.model';
     SequelizeModule.forRoot({
       dialect: 'postgres',
       host: process.env.DATABASE_HOST,
-      port: +process.env.DATABASE_PORT,
-      username: process.env.DATABASE_USER,
+      port: +(process.env.RDS_DEFAULT_PORT ?? 5432),
+      username: process.env.RDS_DB_USER_NAME,
       password: process.env.DATABASE_PASSWORD,
-      database: process.env.DATABASE_NAME,
+      database: process.env.RDS_DB_NAME,
       autoLoadModels: true,
       synchronize: true, // set this to `false` in prod
-      models: [Cart, CartItem]
+      models: [Cart, CartItem],
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      },
     }),
   ],
   controllers: [

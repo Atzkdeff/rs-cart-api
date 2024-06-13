@@ -1,21 +1,20 @@
-import { Column, Model, Table } from 'sequelize-typescript';
+import { AllowNull, BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
 
 import { Cart } from './cart.model';
 
-@Table
+@Table({modelName: "CartItem", tableName: "cart_items", timestamps: false})
 export class CartItem extends Model {
-  @Column({
-    primaryKey: true,
-    validate: {isUUID: 3},
-    references: {
-      model: Cart,
-      key: 'id'
-    }})
+  @ForeignKey(() => Cart)
+  @Column(DataType.UUID)
   cart_id: string;
 
-  @Column({validate: {isUUID: 3}})
+  @AllowNull(false)
+  @Column(DataType.STRING)
   product_id: string;
 
-  @Column({validate: {isInt: true}})
-  count: string;
+  @Column(DataType.INTEGER)
+  count: number;
+
+  @BelongsTo(() => Cart)
+  cart: Cart;
 }
