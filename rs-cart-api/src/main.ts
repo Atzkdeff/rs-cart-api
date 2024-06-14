@@ -17,7 +17,7 @@ export async function bootstrap() {
     });
     app.use(helmet());
 
-    await app.listen(port);
+    // await app.listen(port);
 
     //serverless
     await app.init();

@@ -26,8 +26,7 @@ export class CartService {
   }
 
   async findOrCreateByUserId(userId: string): Promise<Cart> {
-    console.log("userId", userId)
-    let userCart = await this.findByUserId(userId ?? "");
+    let userCart = await this.findByUserId(userId);
 
     if (userCart) {
       return userCart;
